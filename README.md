@@ -19,7 +19,7 @@ _Other colorized images:_
 [Places365-Standard](http://places2.csail.mit.edu/download-private.html) 
 
 ### 🗃️ Requirements
-Code is written in Python 3.11. [Here](requirements.txt) are all requirements, hit the following to install:
+Code is written in Python 3.7. [Here](requirements.txt) are all requirements, hit the following to install:
 ```bash
 pip3 install -r requirements.txt
 ```
