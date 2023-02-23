@@ -26,7 +26,7 @@ if __name__ == "__main__":
                          learning_rate=LEARNINGRATE,
                          img_dir_train=img_dir_train,
                          img_dir_val=img_dir_val,
-                         img_dir_test=img_dir_val,
+                         img_dir_test=img_dir_test,
                          model_checkpoint=args.model,
                          num_workers=num_workers,
                          models_dir=models_dir,
