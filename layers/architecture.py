@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from convolution import Conv2d
-from low import LowLevelFeatures
-from mid import MidLevelFeatures
-from globalF import GlobalFeatures
-from classification import ClassificationNetwork
-from colorization import ColorizationNetwork
+
+from layers.convolution import Conv2d
+from layers.low import LowLevelFeatures
+from layers.mid import MidLevelFeatures
+from layers.globalF import GlobalFeatures
+from layers.classification import ClassificationNetwork
+from layers.colorization import ColorizationNetwork
 
 class ColorifyNet(nn.Module):
     """Colorization network class"""
@@ -22,7 +22,7 @@ class ColorifyNet(nn.Module):
 
         self.net_divisor = net_divisor
 
-        self.conv_fuse = Conv2d(512 // net_divisor, 256 // net_divisor, 1, kernel_size=1, padding=0)
+        self.conv_fuse = Conv2d(512 // net_divisor, 256 // net_divisor, 1, kernelSize=1, padding=0)
 
         self.low = LowLevelFeatures(net_divisor)
         self.mid = MidLevelFeatures(net_divisor)

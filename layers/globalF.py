@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from convolution import Conv2d
+from layers.convolution import Conv2d
 
 class GlobalFeatures(nn.Module):
     """Global Features Network"""

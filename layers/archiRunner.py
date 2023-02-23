@@ -1,6 +1,6 @@
 import os
 import shutil
-import time
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
@@ -9,9 +9,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from skimage import io
 
-from architecture import ColorifyNet
-from dataloader import ImagesDateset
-from utils import net_out2rgb
+from layers.architecture import ColorifyNet
+from layers.dataloader import ImagesDateset
+from layers.utils import net_out2rgb
 
 
 class Training:
@@ -100,7 +100,7 @@ class Training:
         
         self.current_model_name = model_checkpoint
         self.best_val_loss = float("inf")
-        self.best_model_dir = os.path.join(self.models_dir, 'ColorifyNet-the-best.pt')
+        self.best_model_dir = os.path.join(self.models_dir, 'ColorifyNet-best.pt')
 
         
     def loss(self, col_target, col_out, class_target, class_out):
@@ -117,25 +117,25 @@ class Training:
         # Turn train mode on
         self.net.train() 
 
-        for batch_idx, train_data in enumerate(self.trainloader):
+        with tqdm(enumerate(self.trainloader), unit="batches", colour="green", total=len(self.trainloader)) as pbar:
+            for batch_idx, train_data in pbar:
 
-            L, ab, labels = train_data
-            L, ab, labels = L.to(self.device), ab.to(self.device), labels.to(self.device)
+                L, ab, labels = train_data
+                L, ab, labels = L.to(self.device), ab.to(self.device), labels.to(self.device)
 
-            self.optimizer.zero_grad()
-            ab_out, labels_out = self.net(L)
+                self.optimizer.zero_grad()
+                ab_out, labels_out = self.net(L)
+                
+                assert ab.shape == ab_out.shape
+                
+                loss = self.loss(ab, ab_out, labels, labels_out)
+                loss.backward()
+                self.optimizer.step()
             
-            assert ab.shape == ab_out.shape
-            
-            loss = self.loss(ab, ab_out, labels, labels_out)
-            loss.backward()
-            self.optimizer.step()
-        
-            batch_loss = loss.item()
-            
-            print('[Epoch {:>2} / {} | Batch: {:>2} / {}] loss: {:>10.3f}'
-                .format(epoch+1, self.EPOCHS, batch_idx + 1, len(self.trainloader), batch_loss))
-            epoch_loss += batch_loss
+                batch_loss = loss.item()
+                
+                pbar.desc = f'[Batch: {batch_idx + 1:>2} / {len(self.trainloader)}] loss: {batch_loss:>10.3f}'
+                epoch_loss += batch_loss
             
         # Epoch loss = mean loss over all batches
         # length of trainloader indicates number of batches
@@ -153,21 +153,19 @@ class Training:
         # Turn eval mode on
         self.net.eval()
         with torch.no_grad():
-            
-            for batch_idx, dev_data in enumerate(self.devloader):
+            with tqdm(enumerate(self.devloader), unit="batches", colour="yellow", total=len(self.devloader)) as pbar:
+                for batch_idx, dev_data in pbar:
 
-                L_dev, ab_dev, labels_dev = dev_data
-                L_dev, ab_dev, labels_dev = L_dev.to(self.device), ab_dev.to(self.device), labels_dev.to(self.device)
+                    L_dev, ab_dev, labels_dev = dev_data
+                    L_dev, ab_dev, labels_dev = L_dev.to(self.device), ab_dev.to(self.device), labels_dev.to(self.device)
 
-                ab_dev_output, labels_dev_out = self.net(L_dev)
+                    ab_dev_output, labels_dev_out = self.net(L_dev)
 
-                assert ab_dev.shape == ab_dev_output.shape
-                
-                dev_batch_loss = self.loss(ab_dev, ab_dev_output, labels_dev, labels_dev_out )
-                dev_loss += dev_batch_loss.item()
-
-                print("[Validation] [Batch {:>2} / {}] dev loss: {:>10.3f}"
-                    .format(batch_idx+1, len(self.devloader), dev_batch_loss))
+                    assert ab_dev.shape == ab_dev_output.shape
+                    
+                    dev_batch_loss = self.loss(ab_dev, ab_dev_output, labels_dev, labels_dev_out )
+                    dev_loss += dev_batch_loss.item()
+                    pbar.desc = f'[Batch: {batch_idx + 1:>2} / {len(self.devloader)}] loss: {dev_batch_loss:>10.3f}'
                 
                 
         dev_loss /= len(self.devloader)        
@@ -188,7 +186,7 @@ class Training:
             if os.path.isfile(self.best_model_dir):
                 model_dir = self.best_model_dir
 
-        print("Make sure you're using up to date model!!!")    
+        # print("Make sure you're using up to date model!!!")    
         print("Colorizing {} using {}\n".format(self.img_dir_test, model_dir))
 
 
@@ -199,21 +197,21 @@ class Training:
         self.net.eval()
 
         with torch.no_grad():
-            for batch_no, data in enumerate(self.testloader):
-                
-                print("Processing batch {} / {}"
-                      .format(batch_no + 1, len(self.testloader)))
-                
-                L, _, name = data
-                L = L.to(self.device)
-                ab_outputs, _ = self.net(L)
-                
-                L = L.to(torch.device("cpu"))
-                ab_outputs = ab_outputs.to(torch.device("cpu"))
-                
-                for i in range(L.shape[0]):
-                    img = net_out2rgb(L[i], ab_outputs[i])
-                    io.imsave(os.path.join(self.img_out_dir, name[i]), img)
+             with tqdm(enumerate(self.testloader), unit="batches", colour="red", total=len(self.testloader)) as pbar:
+                for batch_no, data in pbar:
+                    
+                    pbar.desc = f'[Processing batch: {batch_no + 1:>2} / {len(self.testloader)}]'
+                    
+                    L, _, name = data
+                    L = L.to(self.device)
+                    ab_outputs, _ = self.net(L)
+                    
+                    L = L.to(torch.device("cpu"))
+                    ab_outputs = ab_outputs.to(torch.device("cpu"))
+                    
+                    for i in range(L.shape[0]):
+                        img = net_out2rgb(L[i], ab_outputs[i])
+                        io.imsave(os.path.join(self.img_out_dir, name[i]), img)
                 
         print("Saved all photos to " + self.img_out_dir)
 
@@ -221,7 +219,7 @@ class Training:
     def save_checkpoint(self, epoch):
         """Saves a checkpoint of the model to a file."""
         path = self.models_dir
-        fname = "ColorifyNet{}-{}.pt".format(time.strftime("%y%m%d-%H-%M-%S"), epoch)
+        fname = "ColorifyNet-current.pt"
         full_path = os.path.join(path, fname)
 
         torch.save({
@@ -251,7 +249,7 @@ class Training:
         Args:
             model_checkpoint: path to the checkpoint.
         """
-        print("Resuming training of: " + model_checkpoint)
+        # print("Resuming training of: " + model_checkpoint)
         checkpoint = torch.load(model_checkpoint, map_location=torch.device("cpu"))
         self.net.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -277,9 +275,9 @@ class Training:
 
         print("Training starts from epoch: {}".format(self.start_epoch))
         print("Total number of epochs:     {}".format(self.EPOCHS))
-        print("ColorifyNet parameters are divided by: {}".format(self.net_divisor))
+        # print("ColorifyNet parameters are divided by: {}".format(self.net_divisor))
         print("Batch size:  {}".format(self.BATCH_SIZE))
-        print("Used divide: {}".format(self.device))
+        # print("Used device: {}".format(self.device))
         print("Number of classes: {}".format(self.num_classes))
         print()
 

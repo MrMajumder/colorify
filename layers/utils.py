@@ -1,5 +1,6 @@
 import numpy as np
 from skimage import color
+from skimage.util import img_as_ubyte
 
 
 def net_out2rgb(L, ab_out):
@@ -35,6 +36,11 @@ def net_out2rgb(L, ab_out):
     #   - scikit image floats are in range -1 to 1
     #   - http://scikit-image.org/docs/dev/user_guide/data_types.html
     #   - idk what's next, but converting image to float64 somehow
-    #     does the job. scikit automagically converts those values.
+    #     does the job. scikit automatically converts those values.
     img_stack = img_stack.astype(np.float64)	
-    return  color.lab2rgb(img_stack)
+    img = color.lab2rgb(img_stack)
+    img = img_as_ubyte(img)
+    return img
+
+if __name__ == "__main__":
+    print("Utils to use")

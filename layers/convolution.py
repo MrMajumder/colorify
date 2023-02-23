@@ -1,7 +1,4 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
 
 def Conv2d(inChannel, outChannel, stride, kernelSize=3, padding=1):
     """Returns an instance of nn.Conv2d"""
