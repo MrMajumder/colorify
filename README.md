@@ -71,6 +71,10 @@ To test the model, use the following command:
 py -3.7 main.py --mode test --model model/places10/ColorifyNet-best.pt
 ```
 
+## ℹ️ Project Information and Presentation Slides
+📃 Slide 1 - [Colorify - ML Project Idea](https://docs.google.com/presentation/d/12aq2LDsEImlDOwldLfFMpNNX0tQObyeZ/edit?usp=sharing&ouid=103881186940791324229&rtpof=true&sd=true)
+📃 Slide 2 - [Colorify - Update 1 (Architecture Implemented, Training Started)](https://docs.google.com/presentation/d/1DRkCzScaaBJJcdsakL554Utj6rA-FBcl/edit?usp=sharing&ouid=103881186940791324229&rtpof=true&sd=true)
+
 ## 🧑‍💻 Contributors
 1. [Sourov Jajodia](https://github.com/Sourov72)
 2. [Shafayat Hossain Majumder](https://github.com/MrMajumder)
