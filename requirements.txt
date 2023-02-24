@@ -2,5 +2,4 @@ scikit-image
 torch
 numpy
 torchvision
-PyYAML
 tqdm
